@@ -7,20 +7,18 @@ data = bytes(50_000)
 
 @uprofiler.profile
 def fnv1a32_vanilla_micropython(buf):
-    mod = 1 << 32
     h = 0x811C9DC5
     for b in buf:
-        h = ((h ^ b) * 0x01000193) % mod
+        h = ((h ^ b) * 0x01000193) & 0xFFFFFFFF
     return h
 
 
 @uprofiler.profile(name="fnv1a32_native")
 @micropython.native
 def fnv1a32_native(buf):
-    mod = 1 << 32
     h = 0x811C9DC5
     for b in buf:
-        h = ((h ^ b) * 0x01000193) % mod
+        h = ((h ^ b) * 0x01000193) & 0xFFFFFFFF
     return h
 
 
@@ -30,8 +28,8 @@ def fnv1a32_viper(buf: ptr8, length: int) -> uint:
     state = uint(0x811C9DC5)
     for i in range(length):
         b = uint(buf[i])
-        state = uint(state ^ b)
-        state = uint(state * 0x01000193)
+        state ^= b
+        state *= 0x01000193
     return state
 
 

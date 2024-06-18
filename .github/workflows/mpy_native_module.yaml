@@ -129,6 +129,9 @@ jobs:
 
       - name: Export MicroPython version.
         run: |
+          export VERSION=$(git describe --tags)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
           export MICROPYTHON_VERSION=${{ matrix.micropython_version }}
           export MICROPYTHON_VERSION_MAJOR_MINOR=${MICROPYTHON_VERSION%.*}
           echo "Detected Micropython Major.Minor: $MICROPYTHON_VERSION_MAJOR_MINOR"
@@ -142,12 +145,12 @@ jobs:
           if [[ "$ARCH" == "x64" ]]; then
             belay run micropython -X heapsize=200M -m unittest tests/test_*.py
           fi
-          mv fnv1a32.mpy fnv1a32-${{ github.ref_name }}-mpy${MICROPYTHON_VERSION_MAJOR_MINOR}-${ARCH}.mpy
+          mv fnv1a32.mpy fnv1a32-${{ env.VERSION }}-mpy${MICROPYTHON_VERSION_MAJOR_MINOR}-${ARCH}.mpy
 
       - name: Upload Native Module MPY Files
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-native-module-fnv1a32-${{ github.ref_name }}-mpy${{ env.MICROPYTHON_VERSION_MAJOR_MINOR }}-${{ env.ARCH }}
+          name: mpy-native-module-fnv1a32-${{ env.VERSION }}-mpy${{ env.MICROPYTHON_VERSION_MAJOR_MINOR }}-${{ env.ARCH }}
           path: "*.mpy"
 
   release_upload:
@@ -174,7 +177,7 @@ jobs:
       - name: Create tarball of mpy files
         run: |
           mkdir -p archives
-          tar -czvf mpy-native-modules/fnv1a32-${{ github.ref_name }}.tar.gz mpy-native-modules/*.mpy
+          tar -czvf mpy-native-modules/fnv1a32-${{ env.VERSION }}.tar.gz mpy-native-modules/*.mpy
 
       - name: Release
         uses: softprops/action-gh-release@v2
