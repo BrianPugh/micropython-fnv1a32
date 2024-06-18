@@ -1,0 +1,33 @@
+[tool.belay]
+ignore = [
+    "__pycache__",
+    "*.pyi",
+    "*.pyx",
+    "*.pxd",
+    "*.pyc",
+    "*.so",
+    "*.html",
+    "_c_src/",
+    "cli/",
+    "*.c",
+    "*.h",
+]
+
+[tool.belay.group.dev]
+optional = true
+
+[tool.belay.group.dev.dependencies]
+argparse = "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/argparse/argparse.py"
+collections = [
+    "https://github.com/mattytrentini/micropython-lib/blob/deque-improvements/python-stdlib/collections.deque/collections/deque.py",
+    "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/collections/collections/__init__.py",
+]
+fnmatch = "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/fnmatch/fnmatch.py"
+pathlib = "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/pathlib/pathlib.py"
+shutil = "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/shutil/shutil.py"
+tempfile = "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/tempfile/tempfile.py"
+unittest = [
+    "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/unittest/unittest/__init__.py",
+    "https://github.com/micropython/micropython-lib/blob/master/python-stdlib/unittest-discover/unittest/__main__.py"
+]
+uprofiler = "https://github.com/BrianPugh/micropython-libs/blob/main/lib/uprofiler.py"
