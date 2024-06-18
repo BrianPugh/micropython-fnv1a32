@@ -29,8 +29,8 @@ def fnv1a32_viper(buf: ptr8, length: int) -> uint:
     state = uint(0x811C9DC5)
     for i in range(length):
         b = uint(buf[i])
-        state = uint(state ^ b)
-        state = uint(state * 0x01000193)
+        state ^= b
+        state *= 0x01000193
     return state
 
 
