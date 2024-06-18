@@ -60,10 +60,10 @@ The following were benchmarked on an rp2040 hashing 50KB of data in-memory.
 
 | Implementation             | Bytes/s   | Relative Speed |
 |----------------------------|-----------|----------------|
-| vanilla micropython        | 24,348    | 1.00x          |
-| @micropython.native        | 26,030    | 1.07x          |
-| @micropython.viper         | 2,437,954 | 100.13x        |
-| micropython native module  | 8,744,316 | 359.14x        |
+| vanilla micropython        | 24,912    | 1.00x          |
+| @micropython.native        | 26,619    | 1.07x          |
+| @micropython.viper         | 2,438,786 | 97.90x         |
+| micropython native module  | 8,744,316 | 351.01x        |
 
 To run the benchmark, install [Belay](https://github.com/BrianPugh/belay/tree/main) and run the following commands:
 
