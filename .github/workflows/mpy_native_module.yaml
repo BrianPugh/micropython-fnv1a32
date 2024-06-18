@@ -174,7 +174,7 @@ jobs:
       - name: Create tarball of mpy files
         run: |
           mkdir -p archives
-          tar -czvf mpy-native-modules/mpy-native-module-fnv1a32-${{ github.ref_name }}.tar.gz mpy-native-modules/*.mpy
+          tar -czvf mpy-native-modules/fnv1a32-${{ github.ref_name }}.tar.gz mpy-native-modules/*.mpy
 
       - name: Release
         uses: softprops/action-gh-release@v2
