@@ -41,7 +41,7 @@ static mp_obj_t _fnv1a32(mp_obj_t data_obj, mp_obj_t state_obj, mp_obj_t chunk_o
         }while(amount_read);
     }
 
-    return mp_obj_new_int(state);
+    return mp_obj_new_int_from_uint(state);
 }
 static MP_DEFINE_CONST_FUN_OBJ_3(_fnv1a32_obj, _fnv1a32);
 
