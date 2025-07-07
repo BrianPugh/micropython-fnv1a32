@@ -1,13 +1,16 @@
 # micropython-fnv1a32
+
 [FNV1a32](http://www.isthe.com/chongo/tech/comp/fnv) is a simple 32-bit hash function that is optimized for speed while maintaining a low collision rate.
 
 This repo implements a [micropython native module](https://docs.micropython.org/en/latest/develop/natmod.html) of the fnv1a32 hash function. To use a precompiled micropython native module, download the appropriate architecture/micropython-version [from the release page](https://github.com/BrianPugh/micropython-fnv1a32/releases).
 Requires MicroPython `>1.22.0`.
 
 # Usage
+
 This library supplies a single function, `fnv1a32`, that can handle a variety of datatypes. The resulting hash is an `integer` object (not `bytes`!).
 
 ### Hashing Data In-Memory
+
 To hash `bytes`/`bytearray`/`str` in-memory:
 
 ```python
@@ -26,6 +29,7 @@ fnv1a32_hash = fnv1a32(b"more data", fnv1a32_hash)
 ```
 
 ### Hashing File
+
 To hash a file:
 
 ```python
@@ -42,10 +46,21 @@ To read and hash bigger chunks at a time (uses more memory, may improve speed):
 from fnv1a32 import fnv1a32
 
 with open("foo.bin") as f:
-    fnv1a32_hash = fnv1a32(f, buffer_size=16384)
+    fnv1a32_hash = fnv1a32(f, buffer=16384)
+```
+
+A pre-allocated buffer may also be used:
+
+```python
+from fnv1a32 import fnv1a32
+
+buffer = bytearray(16384)
+with open("foo.bin") as f:
+    fnv1a32_hash = fnv1a32(f, buffer=buffer)
 ```
 
 # Unit Testing
+
 To run the unittests, install [Belay](https://github.com/BrianPugh/belay/tree/main) and run the following commands:
 
 ```bash
@@ -56,6 +71,7 @@ belay run micropython -m unittest tests/test_fnv1a32.py
 ```
 
 # Benchmark
+
 The following were benchmarked on an rp2040 hashing 50KB of data in-memory.
 
 | Implementation             | Bytes/s   | Relative Speed |
