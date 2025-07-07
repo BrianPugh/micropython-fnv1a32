@@ -24,3 +24,11 @@ class TestFnv(unittest.TestCase):
             with filename.open() as f:
                 self.assertEqual(fnv1a32(f, buffer=mv), 0xBF9CF968)
         self.assertEqual(mv[:6], b"foobar")
+    def test_file_with_invalid_memoryview(self):
+        mv = "this is not a writable buffer."
+        with TemporaryDirectory() as tmp_dir:
+            filename = Path(tmp_dir) / "test_file"
+            filename.write_text("foobar")
+            with filename.open() as f:
+                with self.assertRaises(TypeError):
+                    fnv1a32(f, buffer=mv)

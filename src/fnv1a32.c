@@ -27,14 +27,10 @@ static mp_obj_t _fnv1a32(mp_obj_t data_obj, mp_obj_t state_obj, mp_obj_t chunk_o
             buffer_obj = mp_obj_new_bytearray_by_ref(chunk_size, buffer);
         }
         else{
-            if(mp_get_buffer(chunk_obj, &buf_info, MP_BUFFER_RW)){
-                buffer_obj = chunk_obj;
-                buffer = buf_info.buf;
-                chunk_size = buf_info.len;
-            }
-            else{
-                mp_raise_msg(&mp_type_ValueError, "Invalid chunk.");
-            }
+            mp_get_buffer_raise(chunk_obj, &buf_info, MP_BUFFER_RW);
+            buffer_obj = chunk_obj;
+            buffer = buf_info.buf;
+            chunk_size = buf_info.len;
         }
         mp_obj_t readinto_method = mp_load_attr(data_obj, MP_QSTR_readinto);
         mp_int_t amount_read;
