@@ -1,4 +1,4 @@
-def fnv1a32(obj, state=0x811C9DC5, *, buffer_size=4096):
+def fnv1a32(obj, state=0x811C9DC5, *, buffer=4096):
     """Compute the FNV-1a 32-bit hash of a file.
 
     Parameters
@@ -11,8 +11,8 @@ def fnv1a32(obj, state=0x811C9DC5, *, buffer_size=4096):
     state: int
         Hash state. Set to a previous FNV1a32 hash to continue
         hashing.
-    buffer_size: int
+    buffer: int | memoryview
         If ``obj`` is a file, then process data in chunks of this
         size.
     """
-    return _fnv1a32(obj, state, buffer_size)
+    return _fnv1a32(obj, state, buffer)

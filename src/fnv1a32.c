@@ -8,7 +8,7 @@ static uint32_t _hash_loop(uint32_t state, uint8_t *data, uint32_t size){
     return state;
 }
 
-static mp_obj_t _fnv1a32(mp_obj_t data_obj, mp_obj_t state_obj, mp_obj_t chunk_size_obj) {
+static mp_obj_t _fnv1a32(mp_obj_t data_obj, mp_obj_t state_obj, mp_obj_t chunk_obj) {
     mp_buffer_info_t buf_info;
     uint32_t state = mp_obj_get_int(state_obj);
 
@@ -18,9 +18,24 @@ static mp_obj_t _fnv1a32(mp_obj_t data_obj, mp_obj_t state_obj, mp_obj_t chunk_s
     }
     else{
         // Is a file-like object
-        mp_int_t chunk_size = mp_obj_get_int(chunk_size_obj);
-        uint8_t *buffer = m_malloc(chunk_size);
-        mp_obj_t buffer_obj = mp_obj_new_bytearray_by_ref(chunk_size, buffer);
+        uint8_t *buffer;
+        mp_obj_t buffer_obj;
+        mp_int_t chunk_size;
+        if(mp_obj_is_int(chunk_obj)){
+            chunk_size = mp_obj_get_int(chunk_obj);
+            buffer = m_malloc(chunk_size);
+            buffer_obj = mp_obj_new_bytearray_by_ref(chunk_size, buffer);
+        }
+        else{
+            if(mp_get_buffer(chunk_obj, &buf_info, MP_BUFFER_RW)){
+                buffer_obj = chunk_obj;
+                buffer = buf_info.buf;
+                chunk_size = buf_info.len;
+            }
+            else{
+                mp_raise_msg(&mp_type_ValueError, "Invalid chunk.");
+            }
+        }
         mp_obj_t readinto_method = mp_load_attr(data_obj, MP_QSTR_readinto);
         mp_int_t amount_read;
         do{

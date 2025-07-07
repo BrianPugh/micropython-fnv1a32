@@ -15,3 +15,12 @@ class TestFnv(unittest.TestCase):
             filename.write_text("foobar")
             with filename.open() as f:
                 self.assertEqual(fnv1a32(f), 0xBF9CF968)
+
+    def test_file_with_custom_memoryview(self):
+        mv = memoryview(bytearray(4096))
+        with TemporaryDirectory() as tmp_dir:
+            filename = Path(tmp_dir) / "test_file"
+            filename.write_text("foobar")
+            with filename.open() as f:
+                self.assertEqual(fnv1a32(f, buffer=mv), 0xBF9CF968)
+        self.assertEqual(mv[:6], b"foobar")
