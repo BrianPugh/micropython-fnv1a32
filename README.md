@@ -74,12 +74,12 @@ belay run micropython -m unittest tests/test_fnv1a32.py
 
 The following were benchmarked on an rp2040 hashing 50KB of data in-memory.
 
-| Implementation             | Bytes/s   | Relative Speed |
-|----------------------------|-----------|----------------|
-| vanilla micropython        | 24,912    | 1.00x          |
-| @micropython.native        | 26,619    | 1.07x          |
-| @micropython.viper         | 2,438,786 | 97.90x         |
-| micropython native module  | 8,744,316 | 351.01x        |
+| Implementation             | Bytes/s    | Relative Speed |
+|----------------------------|------------|----------------|
+| vanilla micropython        | 24,912     | 1.00x          |
+| @micropython.native        | 26,619     | 1.07x          |
+| @micropython.viper         | 2,438,786  | 97.90x         |
+| micropython native module  | 25,906,736 | 1040x          |
 
 To run the benchmark, install [Belay](https://github.com/BrianPugh/belay/tree/main) and run the following commands:
 
