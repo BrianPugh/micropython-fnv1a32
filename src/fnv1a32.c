@@ -1,10 +1,36 @@
 #include "py/dynruntime.h"
 
 static uint32_t _hash_loop(uint32_t state, uint8_t *data, uint32_t size){
-    for(uint32_t i=0; i < size; i++){
-        state ^= data[i];
+    uint8_t *p = data;
+    uint8_t *end = data + (size & ~15);  // Round down to 16-byte boundary
+
+    // Process 16 bytes at a time for better performance
+    for(; p < end; p += 16){
+        state ^= *p;      state *= 0x01000193;
+        state ^= *(p+1);  state *= 0x01000193;
+        state ^= *(p+2);  state *= 0x01000193;
+        state ^= *(p+3);  state *= 0x01000193;
+        state ^= *(p+4);  state *= 0x01000193;
+        state ^= *(p+5);  state *= 0x01000193;
+        state ^= *(p+6);  state *= 0x01000193;
+        state ^= *(p+7);  state *= 0x01000193;
+        state ^= *(p+8);  state *= 0x01000193;
+        state ^= *(p+9);  state *= 0x01000193;
+        state ^= *(p+10); state *= 0x01000193;
+        state ^= *(p+11); state *= 0x01000193;
+        state ^= *(p+12); state *= 0x01000193;
+        state ^= *(p+13); state *= 0x01000193;
+        state ^= *(p+14); state *= 0x01000193;
+        state ^= *(p+15); state *= 0x01000193;
+    }
+
+    // Handle remaining bytes
+    end = data + size;
+    for(; p < end; p++){
+        state ^= *p;
         state *= 0x01000193;
     }
+
     return state;
 }
 
