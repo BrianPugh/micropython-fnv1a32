@@ -25,6 +25,15 @@ jobs:
           - "armv7emdp"
           - "xtensa"
           - "xtensawin"
+          - "rv32imc"
+        exclude:
+          # rv32imc is only valid for micropython >=1.25.0
+          - micropython_version: "1.22.2"
+            ARCH: "rv32imc"
+          - micropython_version: "1.23.0"
+            ARCH: "rv32imc"
+          - micropython_version: "1.24.1"
+            ARCH: "rv32imc"
     env:
       ARCH: ${{ matrix.ARCH }}
     steps:
@@ -62,6 +71,12 @@ jobs:
       - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
         if: startsWith(env.ARCH, 'arm')
         uses: carlosperate/arm-none-eabi-gcc-action@v1.8.1
+
+      - name: Install RISC-V toolchain for rv32imc
+        if: env.ARCH == 'rv32imc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-riscv64-unknown-elf picolibc-riscv64-unknown-elf
 
       - name: Install Micropython Build Dependencies
         run: |
