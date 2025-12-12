@@ -38,7 +38,7 @@ jobs:
       ARCH: ${{ matrix.ARCH }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -49,7 +49,7 @@ jobs:
 
       - name: Set up python
         if: env.ARCH != 'xtensa'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: 'pip'
@@ -68,11 +68,11 @@ jobs:
 
       - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
         if: startsWith(env.ARCH, 'arm')
-        uses: carlosperate/arm-none-eabi-gcc-action@v1.8.1
+        uses: carlosperate/arm-none-eabi-gcc-action@v1.11.1
 
       - name: Cache Setup Xtensa Toolchain (ESP8266)
         if: env.ARCH == 'xtensa'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             esp-open-sdk/xtensa-lx106-elf
@@ -94,7 +94,7 @@ jobs:
 
       - name: Cache Setup ESP-IDF (ESP32)
         if: env.ARCH == 'xtensawin'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             esp-idf
@@ -125,7 +125,7 @@ jobs:
           done
 
       - name: Cache MicroPython
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: micropython
           key: micropython-${{ matrix.micropython_version }}
@@ -156,7 +156,7 @@ jobs:
           mv fnv1a32.mpy fnv1a32-${{ env.VERSION }}-mpy${MICROPYTHON_VERSION_MAJOR_MINOR}-${ARCH}.mpy
 
       - name: Upload Native Module MPY Files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mpy-native-module-fnv1a32-${{ env.VERSION }}-mpy${{ env.MICROPYTHON_VERSION_MAJOR_MINOR }}-${{ env.ARCH }}
           path: "*.mpy"
@@ -167,7 +167,7 @@ jobs:
       - build
     steps:
       - name: Download All Native Module Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: mpy-native-modules
           pattern: mpy-native-module-*
@@ -177,7 +177,7 @@ jobs:
         run: ls -alh mpy-native-modules
 
       - name: Upload Single Native Module MPY Archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mpy-native-module-all
           path: "mpy-native-modules/*.mpy"
