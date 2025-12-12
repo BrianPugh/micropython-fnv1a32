@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        micropython_version: ["1.22.2", "1.23.0", "1.24.1", "1.25.0", "1.26.0"]
+        micropython_version: ["1.22.2", "1.23.0", "1.24.1", "1.25.0", "1.26.0", "1.27.0"]
         ARCH:
           - "x86"
           - "x64"
@@ -38,7 +38,7 @@ jobs:
       ARCH: ${{ matrix.ARCH }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -47,45 +47,32 @@ jobs:
         run: |
           find . -type f -name "*.c" -exec sed -i 's/static const uint8_t/const uint8_t/g' {} +
 
-      - name: Set up python ${{ matrix.python-version }}
+      - name: Set up python
         if: env.ARCH != 'xtensa'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+          cache: 'pip'
 
       - name: Install Belay
         run: |
           pipx install belay
 
-      - name: Install Xtensa dependencies
-        if: env.ARCH == 'xtensa'
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            gperf \
-            help2man \
-            libtool-bin \
-            python3 \
-            python3-dev
+          sudo apt-get install -y gcc-multilib \
+            ${{ env.ARCH == 'xtensa' && 'gperf help2man libtool-bin python3 python3-dev' || '' }} \
+            ${{ env.ARCH == 'rv32imc' && 'gcc-riscv64-unknown-elf picolibc-riscv64-unknown-elf' || '' }}
+          pip install pyelftools
 
       - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
         if: startsWith(env.ARCH, 'arm')
-        uses: carlosperate/arm-none-eabi-gcc-action@v1.8.1
-
-      - name: Install RISC-V toolchain for rv32imc
-        if: env.ARCH == 'rv32imc'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-riscv64-unknown-elf picolibc-riscv64-unknown-elf
-
-      - name: Install Micropython Build Dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install gcc-multilib
-          pip install pyelftools
+        uses: carlosperate/arm-none-eabi-gcc-action@v1.11.1
 
       - name: Cache Setup Xtensa Toolchain (ESP8266)
         if: env.ARCH == 'xtensa'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             esp-open-sdk/xtensa-lx106-elf
@@ -107,7 +94,7 @@ jobs:
 
       - name: Cache Setup ESP-IDF (ESP32)
         if: env.ARCH == 'xtensawin'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             esp-idf
@@ -137,6 +124,12 @@ jobs:
             echo "${name}=${value}" >> $GITHUB_ENV
           done
 
+      - name: Cache MicroPython
+        uses: actions/cache@v5
+        with:
+          path: micropython
+          key: micropython-${{ matrix.micropython_version }}
+
       - name: Install MicroPython
         uses: BrianPugh/install-micropython@v2
         with:
@@ -163,7 +156,7 @@ jobs:
           mv fnv1a32.mpy fnv1a32-${{ env.VERSION }}-mpy${MICROPYTHON_VERSION_MAJOR_MINOR}-${ARCH}.mpy
 
       - name: Upload Native Module MPY Files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mpy-native-module-fnv1a32-${{ env.VERSION }}-mpy${{ env.MICROPYTHON_VERSION_MAJOR_MINOR }}-${{ env.ARCH }}
           path: "*.mpy"
@@ -174,7 +167,7 @@ jobs:
       - build
     steps:
       - name: Download All Native Module Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: mpy-native-modules
           pattern: mpy-native-module-*
@@ -184,7 +177,7 @@ jobs:
         run: ls -alh mpy-native-modules
 
       - name: Upload Single Native Module MPY Archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mpy-native-module-all
           path: "mpy-native-modules/*.mpy"
