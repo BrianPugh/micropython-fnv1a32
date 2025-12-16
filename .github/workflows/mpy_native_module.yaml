@@ -12,153 +12,42 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        micropython_version: ["1.22.2", "1.23.0", "1.24.1", "1.25.0", "1.26.0", "1.27.0"]
-        ARCH:
-          - "x86"
-          - "x64"
-          - "armv6m"
-          - "armv7m"
-          - "armv7emsp"
-          - "armv7emdp"
-          - "xtensa"
-          - "xtensawin"
-          - "rv32imc"
-        exclude:
-          # rv32imc is only valid for micropython >=1.25.0
-          - micropython_version: "1.22.2"
-            ARCH: "rv32imc"
-          - micropython_version: "1.23.0"
-            ARCH: "rv32imc"
-          - micropython_version: "1.24.1"
-            ARCH: "rv32imc"
-    env:
-      ARCH: ${{ matrix.ARCH }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      # Fixes some bugs on some platforms?
-      - name: Replace "static const uint8_t" with "const uint8_t"
-        run: |
-          find . -type f -name "*.c" -exec sed -i 's/static const uint8_t/const uint8_t/g' {} +
-
-      - name: Set up python
-        if: env.ARCH != 'xtensa'
-        uses: actions/setup-python@v6
+      - name: Build MicroPython Native Module
+        uses: BrianPugh/build-mpy-native-module@main
         with:
-          python-version: "3.11"
-          cache: 'pip'
+          micropython-version: v1.22.2, v1.23.0, v1.24.1, v1.25.0, v1.26.0, v1.27.0
+          architecture: all
+          static-const-workaround: true
 
       - name: Install Belay
-        run: |
-          pipx install belay
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-multilib \
-            ${{ env.ARCH == 'xtensa' && 'gperf help2man libtool-bin python3 python3-dev' || '' }} \
-            ${{ env.ARCH == 'rv32imc' && 'gcc-riscv64-unknown-elf picolibc-riscv64-unknown-elf' || '' }}
-          pip install pyelftools
-
-      - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
-        if: startsWith(env.ARCH, 'arm')
-        uses: carlosperate/arm-none-eabi-gcc-action@v1.11.1
-
-      - name: Cache Setup Xtensa Toolchain (ESP8266)
-        if: env.ARCH == 'xtensa'
-        uses: actions/cache@v5
-        with:
-          path: |
-            esp-open-sdk/xtensa-lx106-elf
-          key: xtensa-toolchain-${{ hashFiles('**/Makefile') }}
-          restore-keys: |
-            xtensa-toolchain-
-
-      - name: Clone and build Xtensa toolchain
-        if: env.ARCH == 'xtensa'
-        run: |
-          if [ ! -d "esp-open-sdk" ]; then
-            git clone --branch fix-ubuntu-21.10-build --recursive https://github.com/BrianPugh/esp-open-sdk.git
-            cd esp-open-sdk
-            unset LD_LIBRARY_PATH
-            make
-            cd ..
-          fi
-          echo "$PWD/esp-open-sdk/xtensa-lx106-elf/bin" >> $GITHUB_PATH
-
-      - name: Cache Setup ESP-IDF (ESP32)
-        if: env.ARCH == 'xtensawin'
-        uses: actions/cache@v5
-        with:
-          path: |
-            esp-idf
-            ~/.espressif
-            !esp-idf/.git
-          key: esp-idf-${{ hashFiles('**/Makefile') }}
-          restore-keys: |
-            esp-idf-
-
-      - name: Setup ESP-IDF (ESP32)
-        if: env.ARCH == 'xtensawin'
-        run: |
-          if [ ! -d "esp-idf" ]; then
-            git clone -b v5.0.6 --recursive https://github.com/espressif/esp-idf.git
-            cd esp-idf
-            git submodule update --init --recursive
-            ./install.sh
-            cd ..
-          fi
-          cd esp-idf
-          ENV_BEFORE=$(env)
-          source export.sh
-          ENV_AFTER=$(env)
-          echo "$ENV_AFTER" | grep -vxF "$ENV_BEFORE" | grep '=' | while IFS='=' read -r name value
-          do
-            echo "exporting to GITHUB_ENV: ${name}=${value}"
-            echo "${name}=${value}" >> $GITHUB_ENV
-          done
-
-      - name: Cache MicroPython
-        uses: actions/cache@v5
-        with:
-          path: micropython
-          key: micropython-${{ matrix.micropython_version }}
+        run: pipx install belay
 
       - name: Install MicroPython
         uses: BrianPugh/install-micropython@v2
         with:
-          reference: v${{ matrix.micropython_version }}
+          reference: v1.27.0
 
-      - name: Export MicroPython version.
+      - name: Run tests on x64 build
+        run: |
+          # Use the latest MicroPython version's x64 build for testing
+          cp fnv1a32-mpy1.27-x64.mpy fnv1a32.mpy
+          belay run micropython -X heapsize=200M -m unittest tests/test_*.py
+
+      - name: Export version for artifact naming
         run: |
           export VERSION=$(git describe --tags)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-          export MICROPYTHON_VERSION=${{ matrix.micropython_version }}
-          export MICROPYTHON_VERSION_MAJOR_MINOR=${MICROPYTHON_VERSION%.*}
-          echo "Detected Micropython Major.Minor: $MICROPYTHON_VERSION_MAJOR_MINOR"
-          echo "MICROPYTHON_VERSION_MAJOR_MINOR=$MICROPYTHON_VERSION_MAJOR_MINOR" >> $GITHUB_ENV
-
-      - name: Build MicroPython Native Module
-        run: |
-          echo "Building architecture $ARCH Complete"
-          make clean
-          make ARCH=$ARCH
-          if [[ "$ARCH" == "x64" ]]; then
-            belay run micropython -X heapsize=200M -m unittest tests/test_*.py
-          fi
-          mv fnv1a32.mpy fnv1a32-${{ env.VERSION }}-mpy${MICROPYTHON_VERSION_MAJOR_MINOR}-${ARCH}.mpy
-
       - name: Upload Native Module MPY Files
         uses: actions/upload-artifact@v5
         with:
-          name: mpy-native-module-fnv1a32-${{ env.VERSION }}-mpy${{ env.MICROPYTHON_VERSION_MAJOR_MINOR }}-${{ env.ARCH }}
+          name: mpy-native-module-fnv1a32-${{ env.VERSION }}
           path: "*.mpy"
 
   release_upload:
@@ -166,6 +55,16 @@ jobs:
     needs:
       - build
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Export version
+        run: |
+          export VERSION=$(git describe --tags)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Download All Native Module Artifacts
         uses: actions/download-artifact@v6
         with:
@@ -176,16 +75,9 @@ jobs:
       - name: Display All Native Module Artifacts
         run: ls -alh mpy-native-modules
 
-      - name: Upload Single Native Module MPY Archive
-        uses: actions/upload-artifact@v5
-        with:
-          name: mpy-native-module-all
-          path: "mpy-native-modules/*.mpy"
-
       - name: Create tarball of mpy files
         run: |
-          mkdir -p archives
-          tar -czvf mpy-native-modules/fnv1a32-${{ env.VERSION }}.tar.gz mpy-native-modules/*.mpy
+          tar -czvf mpy-native-modules/fnv1a32-${{ env.VERSION }}.tar.gz -C mpy-native-modules .
 
       - name: Release
         uses: softprops/action-gh-release@v2
